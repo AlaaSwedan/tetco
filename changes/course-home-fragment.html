@@ -1,0 +1,395 @@
+## mako
+
+<%page expression_filter="h"/>
+<%namespace name='static' file='../static_content.html'/>
+
+<%!
+import json
+
+from django.conf import settings
+from django.utils.translation import ugettext as _
+from django.template.defaultfilters import escapejs
+from django.core.urlresolvers import reverse
+
+from django_comment_client.permissions import has_permission
+from openedx.core.djangolib.js_utils import dump_js_escaped_json, js_escaped_string
+from openedx.core.djangolib.markup import HTML
+from openedx.features.course_experience import UNIFIED_COURSE_TAB_FLAG, SHOW_REVIEWS_TOOL_FLAG
+%>
+
+
+<style type="text/css">
+.row{
+    width: 100% !important;
+    max-width: 100% !important;
+}
+body, .zebra-stripe>*:nth-child(odd), .depth-0 {
+    background: #ffffff;
+    font-size: 15px !important;
+}
+*{
+  font-family: DroidKufi;
+}
+.widget_featured_courses p{
+  font-family: DroidKufi;
+      padding-right: 25px;
+}
+.education-copyright ul{
+  margin:0;
+  padding-right: 25px !important;
+}
+.course-sidebar h3 
+
+{
+    font-size: 18px !!important;
+    font-family: DroidKufi !important;
+}
+
+.course-sidebar .section h3{
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+   .container>div{
+/*      display: block !important;
+*/      table-layout: fixed !important;
+      border: none !important;
+      background: none !important;
+      box-shadow: none !important;
+  }
+
+  html, button, input, select, textarea, form#wiki_revision .CodeMirror{
+    font-family: DroidKufi !important;
+  }
+  div.info-wrapper section.handouts .handouts-header{
+    font-family: DroidKufi !important;
+  }
+  .handouts a{
+    font-family: DroidKufi !important;
+  }
+.course-tabs{
+      display: inline-flex;
+    width: 70%;
+    padding-top: 15px !important;
+}
+.course-tabs li a{
+  font-family: DroidKufi !important;
+}
+body.view-in-course .container {
+    /* max-width: none; */
+    min-width: initial;
+    width: auto;
+}
+.education-logo{
+      padding-right: 25px;
+}
+.education-top-strip ul,.education-top-strip ol{
+  margin: 0 !important;
+}
+.education-top-strip ul li a,.education-top-strip ol li a
+{
+  font-family: DroidKufi;
+}
+.instructor-info-action{
+        margin-top: 1px;
+    /* max-width: none; */
+    font-family: DroidKufi !important;
+    padding: 10px !important;
+}
+.progress{
+        height: 64px;
+
+}
+.wrapper-preview-menu .preview-actions .action-preview .action-preview-select {
+     margin-left: 0px; 
+    font-family: DroidKufi !important;
+    float: left;
+    border: 1px solid #ffffff !important;
+}
+.action-preview-label{
+    font-family: DroidKufi !important;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.wrapper-preview-menu{
+    background-color: #b7b7b7;
+}
+.no-scores{
+   font-family: DroidKufi !important; 
+}
+.course-outline .block-tree .section .section-name .section-title {
+    font-weight: 700;
+    font-size: 2.1rem;
+    margin: 0;
+}
+.date-summary-container .date-summary .heading {
+    font-size: 1.2rem;
+    line-height: 1;
+    font-weight: 700;
+    color: #313131;
+}
+.education-footer-title h4 {
+    font-weight: bold;
+    margin-bottom: 0px;
+    color: #ffffff;
+    font-size: 18px;
+       font-family: DroidKufi !important; 
+}
+.navbar-nav li a{
+    font-size: 12px;
+}
+.widget_contact_info ul li i {
+    position: absolute;
+    right: 0px;
+    top: 1px;
+    width: 40px;
+    height: 40px;
+    background-color: #589abf;
+    text-align: center;
+    font-size: 17px;
+    padding-top: 12px;
+}
+/*
+
+
+*/
+.navbar-default .navbar-nav>.active>a, .navbar-default .navbar-nav>.active>a:hover, .navbar-default .navbar-nav>.active>a:focus{
+    background: transparent;
+}
+.education-header-two .navbar-nav > li {padding: 39px 19px 30px;}
+.education-header-two .education-top-strip:before { content: none;}
+.education-header-two .education-logo { width: auto;}
+#education-header {
+    position: relative;
+    z-index: 90;
+    background-color: #ffffff;
+}
+.education-top-strip { position: relative; }
+.education-top-strip:before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0px;
+    border-left: 82px solid transparent;
+    border-right: 82px solid transparent;
+    border-bottom: 17px solid #ffffff;
+    margin-left: -84px;
+}
+.education-userinfo li {
+    list-style: none;
+    float: right;
+    color: #ffffff;
+    font-size: 14px;
+    padding: 15px 20px 19px 20px;
+    margin-right: 11px;
+}
+.education-userinfo li:first-child { background-color: rgba(255,255,255,0.10); }
+.education-userinfo li i {
+    float: right;
+    margin: 8px 0px 0px 10px;
+}
+.education-user-section { float: left; }
+.education-user-section li {
+    float: left;
+    list-style: none;
+}
+.education-user-section > li {
+    margin-left: 30px;
+    padding: 16px 0px 16px 0px;
+    font-size: 14px;
+}
+.education-user-section > li a i {
+        float: right;
+    margin: 7px 0 0px 16px;
+    font-size: 14px;
+}
+.education-logo {
+    float: right;
+    width: 100%;
+    margin: 9px 0;
+}
+.education-user-section select {
+    background-color: transparent !important;
+    border: 1px solid transparent !important;
+    color: #ffffff !important;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 17px !important;
+    font-weight: 300 !important;
+    height: 40px !important;
+    padding: 3px 12px !important;
+    width: 100% !important;
+    margin-top: -10px;
+}
+
+.hd-3 {
+    margin-bottom: 0.625rem;
+    font-size: 2.5rem;
+    line-height: 1.5;
+    padding-right: 15px;
+}
+.form-actions{
+    padding-right: 15px;
+}
+.form-actions a{
+    font-size: 14px;
+}
+.page-header-main{
+    display: inline-block;
+}
+.education-user-section a {
+    font-size: 17px !important;
+}
+
+.education-userinfo li {
+    font-size: 15px;
+        padding-top: 22px;
+    padding-bottom: 22px;
+}
+.settings-language-form {
+    float: left;
+    padding: 10px;
+    margin-top: -10px;
+}
+.page-header-secondary{
+        display: inline-block;
+}
+.education-user-section li a { color: #ffffff; }
+</style>
+
+<%block name="content">
+<div class="course-view container" id="course-container">
+    <header class="page-header has-secondary">
+        <div class="page-header-main">
+            <nav aria-label="${_('Course Outline')}" class="sr-is-focusable" tabindex="-1">
+                <h2 class="hd hd-3 page-title">${course.display_name_with_default}</h2>
+            </nav>
+        </div>
+        <div class="page-header-secondary">
+            % if settings.FEATURES.get('ENABLE_COURSEWARE_SEARCH'):
+                <div class="page-header-search">
+                    <form class="search-form" role="search" action="${reverse('openedx.course_search.course_search_results', args=[course_key])}">
+                        <label class="field-label sr-only" for="search" id="search-hint">${_('Search the course')}</label>
+                        <input
+                                class="field-input input-text search-input"
+                                type="search"
+                                name="query"
+                                id="search"
+                                placeholder="${_('Search the course')}"
+                        />
+                        <button class="btn btn-small search-button" type="submit">${_('Search')}</button>
+                    </form>
+                </div>
+            % endif
+            <div class="form-actions">
+                % if resume_course_url:
+                    <a class="btn btn-brand action-resume-course" href="${resume_course_url}">
+                        % if has_visited_course:
+                            <span data-action-type="resume">${_("Resume Course")}</span>
+                        % else:
+                            <span data-action-type="start">${_("Start Course")}</span>
+                        % endif
+                    </a>
+                % endif
+            </div>
+        </div>
+    </header>
+    <div class="page-content">
+        <div class="layout layout-1t2t">
+            <main class="layout-col layout-col-b">
+
+                % if upgrade_url and upgrade_price:
+                    <div class="section">
+                        <div class="vc-message tex2jax_ignore" role="group" aria-labelledby="vc-title" tabindex="-1" style="display: none;">
+
+                            <h3 class="vc-title vc-fade vc-polite-only">Pursue a verified certificate</h3>
+
+                            <button class="vc-toggle vc-fade vc-polite-only btn-link" type="button" aria-controls="moreinfo"
+                                    aria-expanded="true" aria-label="${_("Show/Hide")}">
+                                ${_("Show less")}
+                            </button>
+
+                            <div class="vc-hero vc-fade">
+                                <img src="${static.url('course_experience/images/verified-cert.png')}"
+                                     alt="${_("Sample verified certificate with your name, the course title, the logo of the institution and the signatures of the instructors for this course.")}"/>
+                            </div>
+
+                            <ul class="vc-selling-points vc-fade">
+                                <li class="vc-selling-point">${_("Official proof of completion")}</li>
+                                <li class="vc-selling-point">${_("Easily shareable certificate")}</li>
+                                <li class="vc-selling-point">${_("Proven motivator to complete the course")}</li>
+                                <li class="vc-selling-point">${_("Certificate purchases help us continue to offer free courses")}</li>
+                            </ul>
+
+                            <div class="vc-cta vc-fade vc-polite-only">
+                                <a class="btn-upgrade"
+                                   href="${ upgrade_url }"
+                                   data-creative="hero_matthew_smith"
+                                   data-position="hero">${_("Upgrade ({price})").format(price=upgrade_price)}</a>
+                            </div>
+                        </div>
+                    </div>
+                % endif
+
+                % if course_home_message_fragment:
+                    ${HTML(course_home_message_fragment.body_html())}
+                % endif
+
+                % if update_message_fragment and UNIFIED_COURSE_TAB_FLAG.is_enabled(course.id):
+                    <div class="section section-update-message">
+                        ${HTML(update_message_fragment.body_html())}
+                    </div>
+                % endif
+
+                % if outline_fragment:
+                    ${HTML(outline_fragment.body_html())}
+                % endif
+            </main>
+            <aside class="course-sidebar layout-col layout-col-a">
+                % if course_tools:
+                    <div class="section section-tools">
+                        <h3 class="hd-6">${_("Course Tools")}</h3>
+                        <ul class="list-unstyled">
+                            % for course_tool in course_tools:
+                                <li>
+                                    <a class="course-tool-link" data-analytics-id="${course_tool.analytics_id()}" href="${course_tool.url(course_key)}">
+                                        <span class="icon ${course_tool.icon_classes()}" aria-hidden="true"></span>
+                                        ${course_tool.title()}
+                                    </a>
+                                </li>
+                            % endfor
+                        </ul>
+                    </div>
+                % endif
+                % if dates_fragment:
+                    <div class="section section-dates">
+                        ${HTML(dates_fragment.body_html())}
+                    </div>
+                % endif
+                % if handouts_html:
+                    <div class="section section-handouts">
+                        <h3 class="hd-6">${_("Course Handouts")}</h3>
+                        ${HTML(handouts_html)}
+                    </div>
+                % endif
+            </aside>
+        </div>
+    </div>
+    % if course_sock_fragment:
+        ${HTML(course_sock_fragment.body_html())}
+    % endif
+</div>
+</%block>
+
+<%static:webpack entry="CourseHome">
+    new CourseHome({
+        courseRunKey: "${course_key | n, js_escaped_string}",
+        resumeCourseLink: ".action-resume-course",
+        courseToolLink: ".course-tool-link",
+    });
+</%static:webpack>
+
+<%static:webpack entry="Enrollment">
+    new CourseEnrollment('.enroll-btn', '${course_key | n, js_escaped_string}');
+</%static:webpack>
